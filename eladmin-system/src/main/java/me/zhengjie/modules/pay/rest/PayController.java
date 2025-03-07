@@ -19,17 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/iptv")
 @RequiredArgsConstructor
-@Api(tags = "系统：订单接口")
+@Api(tags = "iptv：订单接口")
 public class PayController {
 
     @Autowired
     private FunPayService funPayService;
 
-    @Log("用户下单")
-    @ApiOperation("")
-    @AnonymousPostMapping(value = "/")
+    @ApiOperation("用户下单")
+    @AnonymousPostMapping(value = "/order")
     public ResponseEntity<Object> createOrder(@Validated @RequestBody OrderDto orderDto) throws Exception {
         return new ResponseEntity<>(funPayService.createOrder(orderDto), HttpStatus.OK);
     }

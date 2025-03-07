@@ -13,7 +13,7 @@ public class OrderDto extends BaseDTO implements Serializable {
     @ApiModelProperty(value = "商户号")
     private String merchant;
     @ApiModelProperty(value = "订单号")
-    private int orderNo;
+    private Long orderNo;
     @ApiModelProperty(value = "业务编码")
     private String businessCode;
     @ApiModelProperty(value = "名字")
@@ -23,7 +23,7 @@ public class OrderDto extends BaseDTO implements Serializable {
     @ApiModelProperty(value = "邮箱")
     private String email;
     @ApiModelProperty(value = "下单金额")
-    private int amount;
+    private String amount;
     @ApiModelProperty(value = "通知地址")
     private String notifyUrl;
     @ApiModelProperty(value = "回跳地址")
