@@ -1,6 +1,6 @@
 package me.zhengjie;
 
-import me.zhengjie.modules.pay.service.FunPayService;
+import me.zhengjie.modules.iptv.service.FunPayService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

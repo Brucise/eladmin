@@ -1,7 +1,6 @@
-package me.zhengjie.modules.pay.util;
+package me.zhengjie.modules.iptv.util;
 
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.util.URLUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -266,7 +265,7 @@ public class RsaUtil {
      */
     public static String sign(Map<String, Object> params) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         String queryString = generateSignature(params);
-        Map<String, String> retMap = RsaUtil.genKeyPair();
+        Map<String, String> retMap = RsaUtil.genKeyPair_2();
         String pubKey = retMap.get("pubKey");
         String priKey = retMap.get("priKey");
         String priCipherText = RsaUtil.encryptByPrivate(queryString, priKey);
@@ -304,10 +303,11 @@ public class RsaUtil {
         return filteredParams.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey()) // 按字段名ASCII排序
                 .map(entry -> {
-                    // 5. URL编码处理特殊字符（如&=等）
-                    String encodedKey = URLUtil.encode(entry.getKey());
-                    String encodedValue = URLUtil.encode(entry.getValue());
-                    return encodedKey + "=" + encodedValue;
+                    return entry.getKey() + "=" + entry.getValue();
+//                    // 5. URL编码处理特殊字符（如&=等）
+//                    String encodedKey = URLUtil.encode(entry.getKey(), StandardCharsets.UTF_8);
+//                    String encodedValue = URLUtil.encode(entry.getValue(),StandardCharsets.UTF_8);
+//                    return encodedKey + "=" + encodedValue;
                 })
                 .collect(Collectors.joining("&"));
     }
