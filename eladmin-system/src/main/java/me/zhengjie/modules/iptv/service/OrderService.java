@@ -6,7 +6,7 @@ import me.zhengjie.modules.iptv.service.dto.PayNotifyDto;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
-public interface FunPayService {
+public interface OrderService {
     /**
      * 下单接口
      *
@@ -20,5 +20,5 @@ public interface FunPayService {
      * @param payNotifyDto
      * @return
      */
-    String notify(PayNotifyDto payNotifyDto);
+    String notify(PayNotifyDto payNotifyDto) throws UnsupportedEncodingException, NoSuchAlgorithmException;
 }

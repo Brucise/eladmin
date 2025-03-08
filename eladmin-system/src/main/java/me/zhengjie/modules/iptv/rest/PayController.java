@@ -6,7 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.annotation.rest.AnonymousPostMapping;
-import me.zhengjie.modules.iptv.service.FunPayService;
+import me.zhengjie.modules.iptv.service.OrderService;
 import me.zhengjie.modules.iptv.service.dto.OrderDto;
 import me.zhengjie.modules.iptv.service.dto.PayNotifyDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,18 +25,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class PayController {
 
     @Autowired
-    private FunPayService funPayService;
+    private OrderService orderService;
 
     @ApiOperation("用户下单")
     @AnonymousPostMapping(value = "/order")
     public ResponseEntity<Object> createOrder(@Validated @RequestBody OrderDto orderDto) throws Exception {
-        return new ResponseEntity<>(funPayService.createOrder(orderDto), HttpStatus.OK);
+        return new ResponseEntity<>(orderService.createOrder(orderDto), HttpStatus.OK);
     }
 
     @ApiOperation("支付回调")
     @AnonymousPostMapping(value = "/notify")
-    public String notify(@Validated @RequestBody PayNotifyDto payNotifyDto) {
-        return funPayService.notify(payNotifyDto);
+    public String notify(@Validated @RequestBody PayNotifyDto payNotifyDto) throws Exception {
+        return orderService.notify(payNotifyDto);
 
     }
 }

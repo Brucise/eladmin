@@ -1,6 +1,6 @@
 package me.zhengjie;
 
-import me.zhengjie.modules.iptv.service.FunPayService;
+import me.zhengjie.modules.iptv.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class EladminSystemApplicationTests {
     @Autowired
-    public FunPayService funPayService;
+    public OrderService orderService;
 
     @Test
     public void contextLoads() {

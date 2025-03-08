@@ -6,6 +6,7 @@ import me.zhengjie.modules.iptv.domain.enums.PaymentMethod;
 import me.zhengjie.modules.iptv.domain.enums.PaymentStatus;
 
 import javax.persistence.*;
+import javax.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -32,6 +33,7 @@ public class Payment {
     @Column(name = "user_id", nullable = false)
     private Long userId; // 关联用户 ID
 
+    @DecimalMin(value = "0.00", message = "金额不能为负数")
     @Column(name = "amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal amount; // 支付金额
 
@@ -48,6 +50,15 @@ public class Payment {
 
     @Column(name = "transaction_id", length = 64)
     private String transactionId; // 支付网关返回的交易号（可为空）
+
+    // 新增字段：手续费（保留2位小数）
+    @DecimalMin(value = "0.00", message = "手续费不能为负数")
+    @Column(name = "fee", precision = 10, scale = 2, columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    private BigDecimal fee = BigDecimal.ZERO;
+
+    // 新增字段：支付完成时间（自动记录）
+    @Column(name = "pay_time", updatable = false)
+    private LocalDateTime payTime;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt; // 支付发起时间

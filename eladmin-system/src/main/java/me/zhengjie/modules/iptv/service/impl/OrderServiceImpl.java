@@ -2,25 +2,22 @@ package me.zhengjie.modules.iptv.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.zhengjie.modules.iptv.domain.IptvOrder;
 import me.zhengjie.modules.iptv.domain.Order;
 import me.zhengjie.modules.iptv.domain.Payment;
 import me.zhengjie.modules.iptv.domain.PaymentTransaction;
-import me.zhengjie.modules.iptv.domain.enums.OrderStatus;
-import me.zhengjie.modules.iptv.domain.enums.PaymentMethod;
-import me.zhengjie.modules.iptv.domain.enums.PaymentStatus;
-import me.zhengjie.modules.iptv.domain.enums.PaymentTransactionStatus;
+import me.zhengjie.modules.iptv.domain.enums.*;
 import me.zhengjie.modules.iptv.repository.OrderRepository;
 import me.zhengjie.modules.iptv.repository.PaymentRepository;
 import me.zhengjie.modules.iptv.repository.PaymentTransactionRepository;
 import me.zhengjie.modules.iptv.service.bo.OrderBo;
 import me.zhengjie.modules.iptv.service.dto.OrderDto;
-import me.zhengjie.modules.iptv.service.FunPayService;
+import me.zhengjie.modules.iptv.service.OrderService;
 import me.zhengjie.modules.iptv.service.dto.PayNotifyDto;
 import me.zhengjie.modules.iptv.util.OrderUtil;
 import me.zhengjie.modules.iptv.util.RsaUtil;
@@ -30,9 +27,7 @@ import me.zhengjie.modules.system.domain.User;
 import me.zhengjie.modules.system.repository.DeptRepository;
 import me.zhengjie.modules.system.repository.RoleRepository;
 import me.zhengjie.modules.system.repository.UserRepository;
-import org.apache.commons.collections4.SetUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,11 +36,13 @@ import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FunPayServiceImpl implements FunPayService {
+public class OrderServiceImpl implements OrderService {
     @Value("${pay.url}")
     private String payUrl;
     @Value("${merchant}")
@@ -64,17 +61,16 @@ public class FunPayServiceImpl implements FunPayService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Object createOrder(OrderDto orderDTO) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+
+        String orderNo = OrderUtil.generateOrderNo();
+//        String paymentNo = UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+        orderDTO.setOrderNo(orderNo);
         orderDTO.setMerchant(merchant);
         orderDTO.setPageUrl(pageUrl);
         orderDTO.setNotifyUrl(notifyUrl);
         orderDTO.setSubject(orderDTO.getEmail());
         orderDTO.setName(orderDTO.getWhatsapp());
-
         User user = creatUser(orderDTO);
-
-        String orderNo = OrderUtil.generateOrderNo();
-//        String paymentNo = UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
-
         Order order = new Order();
         order.setTotalAmount(new BigDecimal(orderDTO.getAmount()));
         order.setUserId(user.getId());
@@ -93,16 +89,18 @@ public class FunPayServiceImpl implements FunPayService {
         try {
             String resp = HttpUtil.post(payUrl, JSONUtil.toJsonStr(orderBo));
             JSONObject resp_obj = JSONUtil.parseObj(resp);
+            if (resp_obj.getInt("code") != 0) {
+                throw new Exception("支付接口调用失败");
+            }
 
             // 4. 创建支付记录
             Payment newPayment = new Payment();
-            newPayment.setPaymentNo(resp_obj.getStr("orderNo"));
+            newPayment.setPaymentNo(resp_obj.getJSONObject("data").getStr("orderNo"));
             newPayment.setOrderId(order.getId());
             newPayment.setUserId(user.getId());
             newPayment.setAmount(order.getTotalAmount());
             newPayment.setCurrency(order.getCurrency());
-            newPayment.setPaymentMethod(PaymentMethod.fromString(orderDTO.getBusinessCode()));
-//            newPayment.setTransactionId(resp_obj.getStr("orderNo"));
+            newPayment.setPaymentMethod(PaymentMethod.fromString(FunPayMethod.getByCode(Integer.parseInt(orderDTO.getBusinessCode())).name()));
             newPayment.setStatus(PaymentStatus.PENDING);
             newPayment.setCreatedAt(LocalDateTime.now());
             newPayment.setUpdatedAt(LocalDateTime.now());
@@ -111,16 +109,17 @@ public class FunPayServiceImpl implements FunPayService {
             PaymentTransaction transaction = new PaymentTransaction();
             transaction.setPaymentId(newPayment.getId());
             transaction.setRequestData(JSONUtil.toJsonStr(orderBo));
-            transaction.setResponseData(resp);
+//            transaction.setResponseData(resp);
             transaction.setStatus(PaymentTransactionStatus.PENDING);
             paymentTransactionRepository.save(transaction);
             return resp;
         } catch (Exception e) {
             // 标记订单为失败
+            log.error("下单失败", e);
             order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
+            return null;
         }
-        return null;
     }
 
     /**
@@ -136,8 +135,7 @@ public class FunPayServiceImpl implements FunPayService {
             newUser.setPhone(orderDTO.getPhone());
             newUser.setEmail(orderDTO.getEmail());
             Role role = roleRepository.findByName("客户");
-            Set<Role> roles = SetUtils.emptySet();
-            roles.add(role);
+            Set<Role> roles = Stream.of(role).collect(Collectors.toSet());
             List<Dept> depts = deptRepository.findByName("客户组");
             newUser.setDept(depts.get(0));
             newUser.setRoles(roles);
@@ -150,8 +148,15 @@ public class FunPayServiceImpl implements FunPayService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String notify(PayNotifyDto payNotifyDto) {
+    public String notify(PayNotifyDto payNotifyDto) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         log.info("回调接口请求参数为:{}", JSONUtil.toJsonStr(payNotifyDto));
+        Map<String, Object> payNotifyDtoMap = BeanUtil.beanToMap(payNotifyDto);
+        String sign = RsaUtil.sign(payNotifyDtoMap);
+        if (!StrUtil.equalsIgnoreCase(sign, payNotifyDto.getSign())) {
+            log.error("sign 校验失败");
+            return "FAIL";
+//            throw new RuntimeException("notify sign 校验不通过");
+        }
         // 1. 查询支付记录
         Optional<Payment> paymentOpt = paymentRepository.findByPaymentNo(payNotifyDto.getOrderNo());
         if (!paymentOpt.isPresent()) {
@@ -177,11 +182,15 @@ public class FunPayServiceImpl implements FunPayService {
             transaction.setStatus(PaymentTransactionStatus.SUCCESS);
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setAmount(payNotifyDto.getPayAmount());
+            payment.setFee(payNotifyDto.getFee());
+            payment.setPayTime(payNotifyDto.getPayTime());
             updateOrderStatus(payment.getOrderId(), OrderStatus.PAID);
 
         } else if ("FAIL".equalsIgnoreCase(payNotifyDto.getStatus())) {
             transaction.setStatus(PaymentTransactionStatus.FAILED);
             payment.setAmount(payNotifyDto.getPayAmount());
+            payment.setFee(payNotifyDto.getFee());
+            payment.setPayTime(payNotifyDto.getPayTime());
             payment.setStatus(PaymentStatus.FAILED);
 
         } else if ("REFUNDED".equalsIgnoreCase(payNotifyDto.getStatus())) {

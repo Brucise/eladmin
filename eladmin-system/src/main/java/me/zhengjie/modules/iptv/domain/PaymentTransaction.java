@@ -29,6 +29,7 @@ public class PaymentTransaction {
     @Column(name = "response_data", columnDefinition = "TEXT")
     private String responseData; // 支付网关响应数据 (JSON)
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 32, nullable = false)
     private PaymentTransactionStatus status; // 交易状态 (PENDING, SUCCESS, FAILED)
 

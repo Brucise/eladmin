@@ -1367,24 +1367,27 @@ CREATE TABLE orders
 BEGIN;
 COMMIT;
 DROP TABLE IF EXISTS `payments`;
-CREATE TABLE payments
+CREATE TABLE `payment`
 (
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '支付ID',
-    order_id       BIGINT         NOT NULL COMMENT '订单ID',
-    payment_no     VARCHAR(64)    NOT NULL UNIQUE COMMENT '支付流水号',
-    user_id        BIGINT         NOT NULL COMMENT '用户ID',
-    amount         DECIMAL(10, 2) NOT NULL COMMENT '支付金额',
-    currency       VARCHAR(10)    NOT NULL COMMENT '货币类型',
-    payment_method VARCHAR(32)    NOT NULL COMMENT '支付方式 (ALIPAY, WECHAT, VISA, MASTERCARD)',
-    status         VARCHAR(32)    NOT NULL COMMENT '支付状态 (PENDING, SUCCESS, FAILED, REFUNDED)',
-    transaction_id VARCHAR(64) COMMENT '支付网关返回的交易号',
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '支付发起时间',
-    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '支付更新时间',
-    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
-    INDEX          idx_user_id (user_id),
-    INDEX          idx_status (status),
-    INDEX          idx_payment_method (payment_method)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='支付表';
+    `id`             BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `payment_no`     VARCHAR(64)    NOT NULL COMMENT '支付流水号',
+    `order_id`       BIGINT(20) NOT NULL COMMENT '关联订单ID',
+    `user_id`        BIGINT(20) NOT NULL COMMENT '用户ID',
+    `amount`         DECIMAL(10, 2) NOT NULL COMMENT '支付金额',
+    `currency`       VARCHAR(3)     NOT NULL COMMENT '币种（如USD/CNY）',
+    `payment_method` VARCHAR(20)    NOT NULL COMMENT '支付方式（VISA/MASTER等）',
+    `transaction_id` VARCHAR(128)            DEFAULT NULL COMMENT '第三方交易号',
+    `status`         VARCHAR(20)    NOT NULL COMMENT '支付状态（PENDING/SUCCESS/FAILED）',
+    `fee`            DECIMAL(10, 2) NOT NULL DEFAULT 0.00 COMMENT '手续费',
+    `pay_time`       DATETIME                DEFAULT NULL COMMENT '支付完成时间',
+    `created_at`     DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`     DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_payment_no` (`payment_no`),
+    KEY              `idx_order_id` (`order_id`),
+    KEY              `idx_pay_time` (`pay_time`),
+    KEY              `idx_user_status` (`user_id`, `status`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='支付表';
 
 BEGIN;
 COMMIT;
