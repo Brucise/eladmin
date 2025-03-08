@@ -1366,7 +1366,7 @@ CREATE TABLE orders
 
 BEGIN;
 COMMIT;
-DROP TABLE IF EXISTS `payments`;
+DROP TABLE IF EXISTS `payment`;
 CREATE TABLE `payment`
 (
     `id`             BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -1374,14 +1374,14 @@ CREATE TABLE `payment`
     `order_id`       BIGINT(20) NOT NULL COMMENT '关联订单ID',
     `user_id`        BIGINT(20) NOT NULL COMMENT '用户ID',
     `amount`         DECIMAL(10, 2) NOT NULL COMMENT '支付金额',
-    `currency`       VARCHAR(3)     NOT NULL COMMENT '币种（如USD/CNY）',
+    `currency`       VARCHAR(10)    NOT NULL COMMENT '币种（如USD/CNY）',
     `payment_method` VARCHAR(20)    NOT NULL COMMENT '支付方式（VISA/MASTER等）',
     `transaction_id` VARCHAR(128)            DEFAULT NULL COMMENT '第三方交易号',
     `status`         VARCHAR(20)    NOT NULL COMMENT '支付状态（PENDING/SUCCESS/FAILED）',
     `fee`            DECIMAL(10, 2) NOT NULL DEFAULT 0.00 COMMENT '手续费',
     `pay_time`       DATETIME                DEFAULT NULL COMMENT '支付完成时间',
-    `created_at`     DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at`     DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
+    `created_at`     DATETIME       NOT NULL COMMENT '创建时间',
+    `updated_at`     DATETIME       NOT NULL COMMENT '最后更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_payment_no` (`payment_no`),
     KEY              `idx_order_id` (`order_id`),

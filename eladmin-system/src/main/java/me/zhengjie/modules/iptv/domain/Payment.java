@@ -12,11 +12,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "payments", indexes = {
-        @Index(name = "idx_order_id", columnList = "order_id"),
-        @Index(name = "idx_user_id", columnList = "user_id"),
-        @Index(name = "idx_status", columnList = "status"),
-        @Index(name = "idx_payment_method", columnList = "payment_method")
+@Table(name = "payment", indexes = {
+        @Index(name = "idx_user_status", columnList = "user_id, status")
 })
 public class Payment {
 
@@ -48,16 +45,14 @@ public class Payment {
     @Column(name = "payment_method", length = 32, nullable = false)
     private PaymentMethod paymentMethod; // 支付方式 (ALIPAY, WECHAT, VISA, MASTERCARD)
 
-    @Column(name = "transaction_id", length = 64)
+    @Column(name = "transaction_id", length = 128)
     private String transactionId; // 支付网关返回的交易号（可为空）
 
-    // 新增字段：手续费（保留2位小数）
     @DecimalMin(value = "0.00", message = "手续费不能为负数")
-    @Column(name = "fee", precision = 10, scale = 2, columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
-    private BigDecimal fee = BigDecimal.ZERO;
+    @Column(name = "fee", precision = 10, scale = 2, nullable = false)
+    private BigDecimal fee= BigDecimal.ZERO;;
 
-    // 新增字段：支付完成时间（自动记录）
-    @Column(name = "pay_time", updatable = false)
+    @Column(name = "pay_time")
     private LocalDateTime payTime;
 
     @Column(name = "created_at", nullable = false, updatable = false)
