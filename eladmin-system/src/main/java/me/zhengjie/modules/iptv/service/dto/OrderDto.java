@@ -41,6 +41,8 @@ public class OrderDto extends BaseDTO implements Serializable {
     private String bankCode;
     @ApiModelProperty(value = "备注", required = true)
     private String subject;
+    @ApiModelProperty(value = "频道", required = true)
+    private String channel;
     @ApiModelProperty(value = "签名", required = true)
     private String sign;
 }

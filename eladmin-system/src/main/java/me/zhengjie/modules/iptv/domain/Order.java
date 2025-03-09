@@ -33,6 +33,9 @@ public class Order {
     @Column(name = "currency", length = 10, nullable = false)
     private String currency; // 货币类型
 
+    @Column(name = "channel", length = 128, nullable = false, unique = true)
+    private String channel; // 频道
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 32, nullable = false)
     private OrderStatus status; // 订单状态 (PENDING, PAID, CANCELLED, REFUNDED)

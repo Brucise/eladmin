@@ -77,6 +77,7 @@ public class OrderServiceImpl implements OrderService {
         order.setCurrency(orderDTO.getBankCode());
         order.setStatus(OrderStatus.PENDING);
         order.setOrderNo(orderNo);
+        order.setChannel(orderDTO.getChannel());
         orderRepository.save(order);
 
         OrderBo orderBo = new OrderBo();
@@ -90,7 +91,8 @@ public class OrderServiceImpl implements OrderService {
             String resp = HttpUtil.post(payUrl, JSONUtil.toJsonStr(orderBo));
             JSONObject resp_obj = JSONUtil.parseObj(resp);
             if (resp_obj.getInt("code") != 0) {
-                throw new Exception("支付接口调用失败");
+                log.error("支付接口调用失败：{}", resp);
+                return resp;
             }
 
             // 4. 创建支付记录

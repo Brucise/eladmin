@@ -1159,7 +1159,7 @@ CREATE TABLE `sys_user`
     `create_time`    datetime     DEFAULT NULL COMMENT '创建日期',
     `update_time`    datetime     DEFAULT NULL COMMENT '更新时间',
     PRIMARY KEY (`user_id`) USING BTREE,
-    UNIQUE KEY `uniq_email` (`email`) USING BTREE,
+--     UNIQUE KEY `uniq_email` (`email`) USING BTREE,
     UNIQUE KEY `uniq_username` (`username`) USING BTREE,
     KEY              `idx_dept_id` (`dept_id`) USING BTREE,
     KEY              `idx_enabled` (`enabled`)
@@ -1353,6 +1353,7 @@ CREATE TABLE orders
 (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '订单ID',
     order_no     VARCHAR(64)    NOT NULL UNIQUE COMMENT '商户订单号',
+    channel      VARCHAR(128)   NOT NULL UNIQUE COMMENT '频道',
     user_id      BIGINT         NOT NULL COMMENT '用户ID',
     total_amount DECIMAL(10, 2) NOT NULL COMMENT '订单总金额',
     currency     VARCHAR(10)    NOT NULL COMMENT '货币类型',
