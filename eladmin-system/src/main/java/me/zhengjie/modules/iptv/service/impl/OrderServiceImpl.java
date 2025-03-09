@@ -93,7 +93,7 @@ public class OrderServiceImpl implements OrderService {
 
         BeanUtil.copyProperties(orderDTO, orderBo);
         Map<String, Object> orderMap = BeanUtil.beanToMap(orderBo);
-        String sign = RsaUtil.sign(orderMap);
+        String sign = RsaUtil.sign(orderMap,prikey);
         orderBo.setSign(sign);
         try {
             String resp = HttpUtil.post(payUrl, JSONUtil.toJsonStr(orderBo));

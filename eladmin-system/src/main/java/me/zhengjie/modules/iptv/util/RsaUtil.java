@@ -280,6 +280,13 @@ public class RsaUtil {
         return priCipherText;
     }
 
+    public static String sign(Map<String, Object> params, String priKey) throws UnsupportedEncodingException {
+        String queryString = generateSignature(params);
+        String priCipherText = RsaUtil.encryptByPrivate(queryString, priKey);
+        priCipherText = URLEncoder.encode(priCipherText, "UTF-8");
+        return priCipherText;
+    }
+
     /**
      * 构造参数字典序
      *
