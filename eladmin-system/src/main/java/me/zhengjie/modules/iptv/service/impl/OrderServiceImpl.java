@@ -51,6 +51,10 @@ public class OrderServiceImpl implements OrderService {
     private String pageUrl;
     @Value("${notifyUrl}")
     private String notifyUrl;
+    @Value("${pubKey}")
+    private String pubKey;
+    @Value("${prikey}")
+    private String prikey;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -63,7 +67,11 @@ public class OrderServiceImpl implements OrderService {
     public Object createOrder(OrderDto orderDTO) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         String orderNo = OrderUtil.generateOrderNo();
-//        String paymentNo = UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+
+        //用whatsapp代替手机号
+        if (StrUtil.isEmpty(orderDTO.getPhone())) {
+            orderDTO.setPhone(orderDTO.getWhatsapp());
+        }
         orderDTO.setOrderNo(orderNo);
         orderDTO.setMerchant(merchant);
         orderDTO.setPageUrl(pageUrl);
@@ -150,11 +158,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String notify(PayNotifyDto payNotifyDto) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public String notify(PayNotifyDto payNotifyDto) {
         log.info("回调接口请求参数为:{}", JSONUtil.toJsonStr(payNotifyDto));
         Map<String, Object> payNotifyDtoMap = BeanUtil.beanToMap(payNotifyDto);
-        String sign = RsaUtil.sign(payNotifyDtoMap);
-        if (!StrUtil.equalsIgnoreCase(sign, payNotifyDto.getSign())) {
+//        String sign = RsaUtil.sign(payNotifyDtoMap);
+        boolean verifySignByPub = RsaUtil.verifySignByPub(RsaUtil.generateSignature(payNotifyDtoMap),
+                payNotifyDto.getSign(), pubKey);
+        if (!verifySignByPub) {
             log.error("sign 校验失败");
             return "FAIL";
 //            throw new RuntimeException("notify sign 校验不通过");
@@ -185,14 +195,14 @@ public class OrderServiceImpl implements OrderService {
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setAmount(payNotifyDto.getPayAmount());
             payment.setFee(payNotifyDto.getFee());
-            payment.setPayTime(payNotifyDto.getPayTime());
+            payment.setPayTime(payNotifyDto.getPay_time());
             updateOrderStatus(payment.getOrderId(), OrderStatus.PAID);
 
         } else if ("FAIL".equalsIgnoreCase(payNotifyDto.getStatus())) {
             transaction.setStatus(PaymentTransactionStatus.FAILED);
             payment.setAmount(payNotifyDto.getPayAmount());
             payment.setFee(payNotifyDto.getFee());
-            payment.setPayTime(payNotifyDto.getPayTime());
+            payment.setPayTime(payNotifyDto.getPay_time());
             payment.setStatus(PaymentStatus.FAILED);
 
         } else if ("REFUNDED".equalsIgnoreCase(payNotifyDto.getStatus())) {

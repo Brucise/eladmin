@@ -33,7 +33,7 @@ public class Order {
     @Column(name = "currency", length = 10, nullable = false)
     private String currency; // 货币类型
 
-    @Column(name = "channel", length = 128, nullable = false, unique = true)
+    @Column(name = "channel", length = 128, unique = true)
     private String channel; // 频道
 
     @Enumerated(EnumType.STRING)

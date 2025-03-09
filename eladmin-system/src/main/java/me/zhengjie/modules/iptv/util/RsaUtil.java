@@ -4,8 +4,10 @@ import cn.hutool.core.convert.Convert;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.validation.annotation.Validated;
 
 import javax.crypto.Cipher;
+import javax.sound.midi.Soundbank;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -16,10 +18,15 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import cn.hutool.core.date.DateUtil;
+
+import java.time.LocalDateTime;
 
 public class RsaUtil {
 
@@ -265,7 +272,7 @@ public class RsaUtil {
      */
     public static String sign(Map<String, Object> params) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         String queryString = generateSignature(params);
-        Map<String, String> retMap = RsaUtil.genKeyPair_2();
+        Map<String, String> retMap = RsaUtil.genKeyPair();
         String pubKey = retMap.get("pubKey");
         String priKey = retMap.get("priKey");
         String priCipherText = RsaUtil.encryptByPrivate(queryString, priKey);
@@ -290,7 +297,8 @@ public class RsaUtil {
                 // 2. 使用Hutool安全类型转换（支持Boolean/Number/Collection等类型）
                 .map(entry -> new AbstractMap.SimpleEntry<>(
                         entry.getKey(),
-                        Convert.toStr(entry.getValue(), "") // 非String类型转String，null转空字符串
+
+                        formatValue(entry.getValue()) // 处理值 // 非String类型转String，null转空字符串
                 ))
                 // 3. 二次过滤空字符串
                 .filter(entry -> !entry.getValue().isEmpty())
@@ -310,6 +318,23 @@ public class RsaUtil {
 //                    return encodedKey + "=" + encodedValue;
                 })
                 .collect(Collectors.joining("&"));
+    }
+
+    /**
+     * 格式化值
+     */
+    private static String formatValue(Object value) {
+        if (value instanceof Date) {
+            // 如果是 Date 类型，格式化为字符串
+            return DateUtil.format((Date) value, "yyyy-MM-dd HH:mm:ss");
+        } else if (value instanceof LocalDateTime) {
+            // 如果是 LocalDateTime 类型，格式化为字符串
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return ((LocalDateTime) value).format(formatter);
+        } else {
+            // 其他类型，直接转换为字符串
+            return Convert.toStr(value, "");
+        }
     }
 
     private static boolean isMoreThan(String pre, String next) {
@@ -374,5 +399,12 @@ public class RsaUtil {
 
         boolean verifySign = RsaUtil.verifySignByPub(message, priCipherText, pubKey);
         System.out.println("验签结果\n" + verifySign);
+
+
+        String queryString = "amount=9.00&businessCode=104&merchant=1009&merchantOrderNo=2025030922020800094&message=success&orderNo=202503091348415591442833408&payAmount=9.00&status=success";
+        String sign = "agW76uKzkaL3vBKHb8_N6IFyy6ihLhFtX-gs0uS9V6YbHB7TyXm8vCU0BjjkuYa4uTzKB3wnoYKZBEZDT2N0Jz12PUtLlOZMsZLGNf8HH7p6UTQ9NYXbM-Wd2_9BVZDRkprUpRSWmQb8iK2TS3n_yrDsOwtcBDMJtjkViLPxUqc6jC-ilrYLpqSdyq084u7dtV8sRK6FXsepVuvI9hPFhQEDFme3Be8GMOmNjM7QbTZPszhiefR5Xi7kgpzAMEr2D4euadN340fRBf3746zADPB2okOaDzc37-AtiHNixHH4P4kn3sVfJbWxkzFG0tDox4y85ZB5eLVGUF5GSmV5jA";
+        boolean verifySign_1 = RsaUtil.verifySignByPub(queryString, sign, pubKey);
+        System.out.println("验签结果_1\n" + verifySign_1);
+
     }
 }

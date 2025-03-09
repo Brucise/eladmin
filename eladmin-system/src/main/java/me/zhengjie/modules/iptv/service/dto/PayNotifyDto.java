@@ -35,7 +35,7 @@ public class PayNotifyDto extends BaseDTO implements Serializable {
     private String merchantOrderNo;
     @ApiModelProperty(value = "代收时间： yyyy-MM-dd HH:mm:ss", hidden = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime payTime;
+    private LocalDateTime pay_time;
     @ApiModelProperty(value = "手续费", hidden = true)
     private BigDecimal fee; // 手续费
 }
